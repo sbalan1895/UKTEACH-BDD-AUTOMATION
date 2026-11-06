@@ -1,3 +1,4 @@
+@JobSearch
 Feature: UK-Teach JobSearch as anonymous user
 
 

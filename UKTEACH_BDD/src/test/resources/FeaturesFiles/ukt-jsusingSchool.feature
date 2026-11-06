@@ -1,3 +1,4 @@
+@JobDetails
 Feature: UK-Teach JobDetails page as anonymous user
 
 
