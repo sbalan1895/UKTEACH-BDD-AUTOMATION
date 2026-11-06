@@ -1,12 +1,4 @@
-
-.metadata/
 target/
-test-output/
-bin/
-*.class
-
-.metadata/
-target/
-test-output/
-bin/
-*.class
+.classpath
+.project
+.settings/src/test/resources/ResourceFiles/*.xlsx
