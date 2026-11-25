@@ -58,19 +58,26 @@ public class POM_JobApply extends SchoolLogin_Base{
 	//	private By jobRefF      = By.xpath("//input[@id='YourRefernce']");
 	private By locationF    = By.xpath("//input[@id='CurrentLocation_0']");
 	private By clkAddL = By.xpath("//input[@id='btnadd_0']"); // or input/autocomplete
-	private By advertFrame = By.xpath("//iframe[contains(@class,'cke_wysiwyg_frame')"
-			+ " and contains(@title,'Description')]");
-	private By advertBody  = By.xpath("//body[@contenteditable='true']");
-
+	private By advertLabel = By.xpath("//label[@id='jdsummary']");
+	private By advertBody = By.xpath("//div[contains(@class,'ck-editor__editable') and @role='textbox']");
 	private By jobSmry = By.xpath("//input[@id='chkJobSummary']");     // rich-text editor?
-	
+
 	private By contractType = By.xpath("//input[@id='ContractTypes13']"); //input[@id='ContractTypes13']
 	private By salaryFromF  = By.xpath("//input[@id='SalaryFrom']");
 	private By salaryToF    = By.xpath("//input[@id='SalaryTo']");
 	private By saveCnt = By.xpath("(//input[@value='Save & Continue'])[1]");
-	private By locSuggestions = By.xpath("//ul[contains(@class,'ui-autocomplete') or contains(@class,'suggest') or contains(@class,'typeahead')]//li");
 
 	//====================
+
+	private void waitForPageIdle() {
+		try {
+			new WebDriverWait(driver, Duration.ofSeconds(5)).until(d ->
+				Boolean.TRUE.equals(jsE.executeScript(
+					"return document.readyState==='complete' && (typeof jQuery==='undefined' || jQuery.active===0);")));
+		} catch (TimeoutException ignored) {
+			// page may have constant background requests; carry on
+		}
+	}
 
 	private void scrollTo(WebElement el) {
 		jsE.executeScript(
@@ -114,6 +121,16 @@ public class POM_JobApply extends SchoolLogin_Base{
 		}
 	}
 
+	public void dumpDebug() {
+		System.out.println("URL: " + driver.getCurrentUrl());
+		System.out.println("iframes: " + driver.findElements(By.tagName("iframe")).size());
+		for (WebElement f : driver.findElements(By.tagName("iframe"))) {
+			System.out.println("  iframe class=" + f.getAttribute("class") + " title=" + f.getAttribute("title"));
+		}
+		System.out.println("CKEDITOR: " + jsE.executeScript(
+			"return typeof CKEDITOR==='undefined' ? 'missing' : Object.keys(CKEDITOR.instances).join(',');"));
+	}
+	
 	//=====================
 
 	public void navigateToUKTeach() {
@@ -206,9 +223,9 @@ public class POM_JobApply extends SchoolLogin_Base{
 	}
 
 	public void clkCreateVcny() {
-//		waits.until(ExpectedConditions.elementToBeClickable(creatVcBtn)).click();
 
-		safeClick(creatVcBtn);
+		safeClick(creatVcBtn); 
+		waitForPageIdle();
 	}
 
 
@@ -216,7 +233,7 @@ public class POM_JobApply extends SchoolLogin_Base{
 		WebElement tab = waits.until(ExpectedConditions.elementToBeClickable(jobAdvertTab));
 
 		System.out.println("====== Job Advert Details session displaying =====");
-
+		waitForPageIdle();
 	}
 
 	public void enterJobTitle(String v)     { 
@@ -264,32 +281,28 @@ public class POM_JobApply extends SchoolLogin_Base{
 	}
 
 	public void clkAddBtn() {
-		//		waits.until(ExpectedConditions.elementToBeClickable(clkAddL)).click();
 
-		safeClick(clkAddL);
+		safeClick(clkAddL); 
+		waitForPageIdle();
 	}
 
 	// Job Advert Text: plain textarea / contenteditable div
-	public void enterJobAdvertText(String v) {
+	public void enterJobAdvertText1(String v) {
 
 		if (v == null || v.isBlank()) {
 			throw new IllegalArgumentException("No Excel value for Job Advert Text");
 		}
 
-		WebElement frame = waits.until(ExpectedConditions.presenceOfElementLocated(advertFrame));
+		WebElement frame = waits.until(ExpectedConditions.presenceOfElementLocated(advertLabel));
 		scrollTo(frame);
 
 		try {
 
-			waits.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(frame));
+//			waits.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(frame));
 
 			WebElement body = waits.until(ExpectedConditions.elementToBeClickable(advertBody));
 			body.click();
 			body.sendKeys(v);
-			
-		/*	waits.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(frame));
-			WebElement body = waits.until(ExpectedConditions.presenceOfElementLocated(advertBody));
-			body.sendKeys(v); */
 
 			System.out.println("Entered Job Advert Text: " + v);
 
@@ -299,7 +312,31 @@ public class POM_JobApply extends SchoolLogin_Base{
 		}
 	}
 
-	public void enbJScheckbX() {
+	public void enterJobAdvertText(String v) {
+	
+		if (v == null || v.isBlank()) {
+			throw new IllegalArgumentException("No Excel value for Job Advert Text");
+		}
+
+		WebElement box = waits.until(ExpectedConditions.presenceOfElementLocated(advertBody));
+		scrollTo(box);
+
+		try {
+			waits.until(ExpectedConditions.elementToBeClickable(box));
+			box.sendKeys(v);                       // no iframe switch, no click needed
+		} catch (ElementClickInterceptedException | StaleElementReferenceException e) {
+			// fallback: use the CKEditor 5 instance attached to the element
+			box = driver.findElement(advertBody);
+			jsE.executeScript(
+				"var ed = arguments[0].ckeditorInstance; ed.setData(arguments[1]);", box, v);
+		}
+
+		// verify the text landed in the editor
+		waits.until(d -> d.findElement(advertBody).getText().contains(v.substring(0, Math.min(15, v.length()))));
+		System.out.println("Entered Job Advert Text: " + v);
+	}
+	
+	public void enbJScheckbX1() {
 
 		// 1. confirm the locator exists at all
 		int found = driver.findElements(jobSmry).size();
@@ -324,6 +361,16 @@ public class POM_JobApply extends SchoolLogin_Base{
 		// 3. verify
 		waits.until(ExpectedConditions.elementToBeSelected(chk));
 		System.out.println("===== Job Summary CheckBox enabled =====");
+	}
+	
+	public void enbJScheckbX() {
+		
+		waitForPageIdle();
+		WebElement chk = waits.until(ExpectedConditions.presenceOfElementLocated(jobSmry));
+		if (!chk.isSelected()) {
+			safeClick(jobSmry);
+		}
+		waits.until(d -> d.findElement(jobSmry).isSelected());
 	}
 
 	public void enterSalaryFrom(String v)   { 

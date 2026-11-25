@@ -1,4 +1,4 @@
-package com.ukteachrunner;
+package com.runnerJobApply;
 
 import org.junit.runner.RunWith;
 

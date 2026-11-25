@@ -1,6 +1,9 @@
 package com.baseJobApply;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -16,16 +19,24 @@ public class SchoolLogin_Base {
 	
 	public void navigateUKT() {
 
-	/*	WebDriverManager.chromedriver().setup();
-		driver= new ChromeDriver();
-		driver.manage().window().maximize();
-		waits= new WebDriverWait(driver, Duration.ofSeconds(30)); */
+		WebDriverManager.chromedriver().setup();
+
+		Map<String, Object> prefs = new HashMap<>();
+		prefs.put("credentials_enable_service", false);
+		prefs.put("profile.password_manager_enabled", false);
+		prefs.put("profile.password_manager_leak_detection", false);
 
 		ChromeOptions opts = new ChromeOptions();
+		opts.addArguments("--incognito");
+		opts.setExperimentalOption("prefs", prefs);                                   // "prefs"
+		opts.setExperimentalOption("excludeSwitches", List.of("enable-automation"));  // "excludeSwitches"
+		opts.addArguments("--disable-save-password-bubble");
+		opts.addArguments("--disable-notifications");
 		opts.addArguments("--window-size=1920,1080");
-		opts.setExperimentalOption("excludeSwitches", java.util.List.of("enable-automation"));
+
 		driver = new ChromeDriver(opts);
 		driver.manage().window().maximize();
+		waits = new WebDriverWait(driver, Duration.ofSeconds(30));
 		
 	}
 

@@ -22,6 +22,10 @@ public class Hook_UKTEACH extends SchoolLogin_Base{
 
 	@After
 	public void takeScreenshots() throws IOException {
+		
+		if (driver == null) {
+			return;                      // browser never started, nothing to capture
+		}
 
 		String screenshotName= "Screenshot_" + System.currentTimeMillis() + ".png";
 
